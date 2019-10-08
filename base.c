@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glut.h>
+#include <GL/gl.h>
 #include <math.h>
 #include <string.h>
 
@@ -12,27 +13,41 @@ int
 
 unsigned int FrameCount = 0;
 
-int
+float
     camera_position_x = 0,
-    camera_position_y = 0,
-    camera_position_z = 20,
+    camera_position_y = 20,
+    camera_position_z = 25,
     look_position_x = 0,
     look_position_y = 0,
-    look_position_z = 0,
+    look_position_z = 0;
+int
     axis_x = 0,
     axis_y = 1,
-    axis_z = 0;
+    axis_z = 0,
+	flag_y = 0; //Flag para movimento do torus;
 
-float angulo1 = 0, angulo2 = 0, angulo3 = 0;
+int cam_flag = 0;
+
+float
+	torus_y = 0; //Posição do torus para translação
+
+float cam_angle = 0; //Angulo da camera
 
 void ReshapeFunction(int Width, int Height); //Redimensiona a janela
 void RenderFunction(void);
 void KeyboardFunction(unsigned char key, int x, int y);
 void TimerFunction(int Value);
 void INIT(int argc, char **argv);
+void movingTorus();
+void verticalMove();
+
+void rotateCam();
 
 //Desenho Braço
 void mechanicalArm();
+void drawSnowMan();
+
+
 
 int main(int argc, char **argv) {
     INIT(argc, argv);
@@ -50,8 +65,8 @@ void ReshapeFunction(int Width, int Height) {
 void RenderFunction(void) {
     ++FrameCount; //Atualiza contador de frames
     //Define Cor de fundo Inicial da janela rgba [0, 1]
-    glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
-  
+    glClearColor(0.0f, 0.96f, 0.8f, 0.0f);
+
   	//Listagem de enables
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LINE_SMOOTH);
@@ -74,9 +89,31 @@ void RenderFunction(void) {
     //*Definindo as matrizes*//
   
   	//Desenho
-  	
-    glColor3ub(0,0,100);
-    glutWireTeapot(3);
+    //glColor3ub(100, 0, 0);
+    glColor3f(0.9f, 0.9f, 0.9f);
+	glBegin(GL_QUADS);
+		glVertex3f(-100.0f, 0.0f, -100.0f);
+		glVertex3f(-100.0f, 0.0f,  100.0f);
+		glVertex3f( 100.0f, 0.0f,  100.0f);
+		glVertex3f( 100.0f, 0.0f, -100.0f);
+	glEnd();
+
+    verticalMove();
+    int i, j;
+    for(i = -3; i < 3; i++) {
+		for(int j=-3; j < 3; j++) {
+			glPushMatrix();
+			glTranslatef(i * 5.0, 0, j * 5.0);
+			movingTorus();
+            //drawSnowMan();
+			glPopMatrix();
+		}
+    }
+
+    //Camera
+    rotateCam();
+    
+  
 
     glutSwapBuffers(); //Alternando entre os dois buffers
     glutPostRedisplay();//Marca 
@@ -87,33 +124,6 @@ void KeyboardFunction(unsigned char key, int x, int y) {
 		case 27:
             exit(0);
         	break;
-
-		//Controle do braço 1
-		case 'q':
-			angulo1--;
-			break;
-			
-		case 'w':
-			angulo1++;
-			break;
-
-		//Controle braço 2
-		case 'e':
-			angulo2--;
-			break;
-			
-		case 'r':
-			angulo2++;
-			break;
-
-		//Controle da "Garra"
-		case 'o':
-			angulo3--;
-			break;
-		case 'p':
-			angulo3++;
-			break;
-
 		case 'j':
 			camera_position_y--;
 			look_position_y--;
@@ -122,12 +132,8 @@ void KeyboardFunction(unsigned char key, int x, int y) {
 			camera_position_y++;
 			look_position_y++;
 			break;
-
-
-
-			
     }
-    fprintf(stdout, "Flag-Key: [%c]\n", key);
+    fprintf(stdout, "(Flag Key) -> [%c]\n", key);
 }
 
 void KeyboardSpecials(int key, int x, int y) { //Conferir dps Não funciona
@@ -138,23 +144,19 @@ void KeyboardSpecials(int key, int x, int y) { //Conferir dps Não funciona
 	switch(key) {
 		case GLUT_KEY_LEFT:
 			camera_position_x--;
-			look_position_x--;
 			break;
 		case GLUT_KEY_RIGHT:
 			camera_position_x++;
-			look_position_x++;
 			break;
 
 		case GLUT_KEY_UP:
 			camera_position_z--;
-			look_position_z--;
 			break;
 		case GLUT_KEY_DOWN:
 			camera_position_z++;
-			look_position_z++;
 			break;	
 	}
-    glutPostRedisplay();
+  	fprintf(stdout, "Camera x: %f\n", camera_position_x);
 }
 
 void TimerFunction(int Value) {
@@ -194,4 +196,73 @@ void INIT(int argc, char **argv) {
     //Configuração final
     fprintf(stdout, "INFO: OpenGL Version: %s\n",glGetString(GL_VERSION));
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void movingTorus() {
+    //cOLOCAR A FUNÇÃO MOVE AQUI PARA UMA ROSQUINHAS
+    glColor3ub(41, 3, 3);
+    glTranslatef(0,torus_y,0);
+  	glutSolidTorus(0.275, 0.85, 10, 15);
+    glutPostRedisplay();
+}
+
+void verticalMove() {
+	/*	torus_y = 0, //Posição do torus para translação
+	flag_y = 0; //Flag para movimento do torus;*/
+  
+    //fprintf(stdout, "%f : %d\n", torus_y, flag_y);
+	if(flag_y == 0) {
+		torus_y += 0.1;
+    }
+  	if(flag_y == 1) {
+		torus_y -= 0.1;
+    }
+  	if(torus_y >= 8) {
+      flag_y = 1;
+    }
+  	if(torus_y <= 0) {
+		flag_y = 0;
+    }
+}
+
+void rotateCam() {
+    camera_position_x = cos(cam_angle) * 50;
+    camera_position_z = sin(cam_angle) * 50;
+    if(cam_flag == 0) {
+		cam_angle += 0.02;
+    }
+  	if(cam_flag == 1) {
+		cam_angle -= 0.02;
+    }
+  	if(cam_angle >= 360) {
+        cam_flag = 1;
+    }
+  	if(cam_angle <= 0) {
+        cam_flag = 0;
+    }
+}
+
+void drawSnowMan() {
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+// Draw Body
+	glTranslatef(0.0f ,0.75f, 0.0f);
+	glutSolidSphere(0.75f,20,20);
+
+// Draw Head
+	glTranslatef(0.0f, 1.0f, 0.0f);
+	glutSolidSphere(0.25f,20,20);
+
+// Draw Eyes
+	glPushMatrix();
+	glColor3f(0.0f,0.0f,0.0f);
+	glTranslatef(0.05f, 0.10f, 0.18f);
+	glutSolidSphere(0.05f,10,10);
+	glTranslatef(-0.1f, 0.0f, 0.0f);
+	glutSolidSphere(0.05f,10,10);
+	glPopMatrix();
+
+// Draw Nose
+	glColor3f(1.0f, 0.5f , 0.5f);
+	glutSolidCone(0.08f,0.5f,10,2);
+}
