@@ -5,7 +5,7 @@
 #include <math.h>
 #include <string.h>
 
-#define WINDOW_TITLE "Janela"
+#define WINDOW_TITLE "Camera"
 int 
     WIDTH = 600,
     HEIGHT = 600,
@@ -109,6 +109,7 @@ void RenderFunction(void) {
 			glPopMatrix();
 		}
     }
+	//movingTorus();
 
     //Camera
     rotateCam();
@@ -227,18 +228,22 @@ void verticalMove() {
 void rotateCam() {
     camera_position_x = cos(cam_angle) * 50;
     camera_position_z = sin(cam_angle) * 50;
+	cam_angle += 0.01;
+	/*
     if(cam_flag == 0) {
 		cam_angle += 0.01;
     }
   	if(cam_flag == 1) {
 		cam_angle -= 0.01;
     }
-  	if(cam_angle >= 360) {
+  	if(cam_angle == 360) {
         cam_flag = 1;
     }
   	if(cam_angle <= 0) {
         cam_flag = 0;
     }
+	*/
+	fprintf(stdout, "Cam angle: %.2f\n", cam_angle);
 }
 
 void drawSnowMan() {
